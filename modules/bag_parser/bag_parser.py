@@ -10,7 +10,7 @@ class Parser():
         parser.add_argument('-b', dest="single_bag", type=is_bag_file,
                             help="Use single bag file only")
         
-        parser.add_argument('-a', dest="multiple_bags_folder", type=is_bag_dir,
+        parser.add_argument('-a', dest="bag_batch_folder", type=is_bag_dir,
                             help="Use all bag files in the 'bag' dir")
         
 
@@ -40,7 +40,7 @@ def is_bag_dir(arg_bag_str:str):
 def main():
     args = Parser.get_args()
     print('Single bag: {}'.format(args.single_bag))
-    print('Multiple bags folder: {}'.format(args.multiple_bags_folder))
+    print('Bag batch folder: {}'.format(args.bag_batch_folder))
 
 
 if __name__ == '__main__':

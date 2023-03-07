@@ -434,8 +434,9 @@ def main():
     
     
     bag_file = PATH+'../../bag/2023-02-21-15-24-49.bag' # default for example and debug
-    if args.multiple_bags_folder is not None:
-        for filename in os.scandir(args.multiple_bags_folder): 
+    
+    if args.bag_batch_folder is not None:
+        for filename in os.scandir(args.bag_batch_folder): 
             if filename.is_file() and filename.path.split('.')[-1]=='bag':
                 bag_file = filename.path
                 bag_obj.bag = bag_file
