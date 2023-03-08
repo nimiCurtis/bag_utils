@@ -49,7 +49,6 @@ class BagReader():
         # initialize counter
         self._frame_count = 0
 
-
     @property
     def bag(self):
         """Get bag file path
@@ -120,19 +119,21 @@ class BagReader():
 
         return dfs
 
-    def export(self)->dict:
+    def export(self,with_imgs:bool)->dict:
         """This function export the data from the bag and modify the data frames accordingly
 
         Returns:
             dict: dictionary of dataframes
         """     
-
-
         print("[INFO]  Bag doesn't exported, Exporting data ...")
+
+        # initialize with_imgs
+        self._with_imgs = with_imgs
 
         # set topic df
         self.topic_df = self.bag_read.topic_table 
-        self.MetaData["labeled"] = []
+        
+        self.MetaData["labeled"] = [] # can delete this
         dfs = {}
 
         # read and set imu_df
@@ -353,8 +354,12 @@ class BagReader():
                 values_array = np.array(cv_img, dtype=np.int32)
 
             numpy_path_list.append(self.save_np_data(values_array,dir)) # save values
+
+            
             frame_path_list.append(frame_path) # update frame path list
-            cv2.imwrite(frame_path, cv_img)    # save img
+            
+            if self._with_imgs:
+                cv2.imwrite(frame_path, cv_img)    # save img
 
             self._frame_count += 1
 
@@ -416,7 +421,7 @@ class BagReader():
                 json_file.seek(0)
                 json.dump(self.MetaData, json_file, indent=3)
 
-def export_bag(bag_obj:BagReader)->None:
+def export_bag(bag_obj:BagReader,with_imgs:bool)->None:
     """Exporting bag data
 
     Args:
@@ -424,30 +429,34 @@ def export_bag(bag_obj:BagReader)->None:
     """
 
     if bag_obj.MetaData["exported"] == False:
-            bag_obj.export()
+            bag_obj.export(with_imgs=with_imgs)
     else:
             print(f"[INFO]  Bag {bag_obj.bag} already exported. Not Exporting.")
 
 def main():
+    os.chdir(os.path.dirname(__file__))
+
     bag_obj = BagReader()
-    args = Parser.get_args()
-    
-    
-    bag_file = PATH+'../../bag/2023-02-21-15-24-49.bag' # default for example and debug
+    # get arguments
+    parser = Parser.get_parser()
+    Parser.add_bool_arg(parser,'with_imgs',default=False)
+    args = Parser.get_args(parser)
+
+    bag_file = PATH+'../bag/2023-03-07-19-16-37.bag' # default for example and debug
     
     if args.bag_batch_folder is not None:
         for filename in os.scandir(args.bag_batch_folder): 
             if filename.is_file() and filename.path.split('.')[-1]=='bag':
                 bag_file = filename.path
                 bag_obj.bag = bag_file
-                export_bag(bag_obj)
+                export_bag(bag_obj,args.with_imgs)
 
     else:
         if args.single_bag is not None:
             bag_file = args.single_bag
         
         bag_obj.bag = bag_file
-        export_bag(bag_obj)
+        export_bag(bag_obj,args.with_imgs)
 
 if __name__ == '__main__':
     main()
