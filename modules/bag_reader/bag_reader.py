@@ -351,7 +351,7 @@ class BagReader():
                     cv_img = dp.get_disparity_colormap(values_array,min_disparity,max_disparity) # get color map of dispatity values
 
             else:
-                values_array = np.array(cv_img, dtype=np.int32)
+                values_array = np.array(cv_img[:,:,:3], dtype=np.int32)
 
             numpy_path_list.append(self.save_np_data(values_array,dir)) # save values
 

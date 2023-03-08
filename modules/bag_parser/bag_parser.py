@@ -29,6 +29,10 @@ class Parser():
         group.add_argument('--no-' + name, dest=name, action='store_false')
         parser.set_defaults(**{name:default})
 
+    @staticmethod
+    def add_arg(parser,arg, name, help):
+        parser.add_argument(arg, dest=name,help=help)
+
 
 
 def is_bag_file(arg_bag_str: str) -> str:
