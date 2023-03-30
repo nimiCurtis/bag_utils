@@ -522,10 +522,12 @@ class DepthHandler(ImageHandler):
 
         img_clone = img.copy() # make a copy of the values because cv2 only make a view and changing source
 
-        cv2.normalize(img_clone, img_clone, 0, 1, cv2.NORM_MINMAX)
-        img_clone = img_clone*255
+        # cv2.normalize(img_clone, img_clone, 0, 1, cv2.NORM_MINMAX)
+        # img_clone = img_clone*255
         
-        return img_clone
+        depth_img = np.array(256*img_clone/0x0fff,dtype=np.uint8)
+        
+        return depth_img
     
     def get_disparity_colormap(self, img:np.ndarray, min_disparity:int, max_disparity:int)->np.ndarray:
         """Get colormap image from diaprity values
