@@ -14,7 +14,6 @@ class Visualizer():
 
     def __init__(self) -> None:
         pass
-    
 
     def vis_images(self,folder_path):
         # Get list of all image files in folder
@@ -82,7 +81,6 @@ class Visualizer():
         df_rgb = pd.read_csv(bag_obj.MetaData["rgb"],index_col=0)
         df_depth = pd.read_csv(bag_obj.MetaData["depth"],index_col=0)
 
-         
         display_both = False
         
         # Initialize index to 0
@@ -102,8 +100,6 @@ class Visualizer():
             dfs.append(df_rgb)
             dfs.append(df_depth)
             idx_limit = min(len(df_depth),len(df_rgb))
-
-
 
         # Loop until 'q' key is pressed
         while index<idx_limit:

@@ -133,7 +133,8 @@ class BagReader():
         # set topic df
         self.topic_df = self.bag_read.topic_table 
         
-        self.MetaData["labeled"] = [] # can delete this
+        # whether in dataset folder or not
+        self.MetaData["in_data"] = False
         dfs = {}
 
         # read and set imu_df
@@ -419,7 +420,8 @@ class BagReader():
                 self.MetaData = json.load(json_file)
                 self.MetaData[key] = val
                 json_file.seek(0)
-                json.dump(self.MetaData, json_file, indent=3)
+                json_file.truncate()  # clears the file contents
+                json.dump(self.MetaData, json_file, indent=3, separators=(',', ':'), ensure_ascii=False)
 
 def export_bag(bag_obj:BagReader,with_imgs:bool)->None:
     """Exporting bag data
