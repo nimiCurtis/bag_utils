@@ -9,6 +9,8 @@ PATH = os.path.join(os.path.dirname(__file__),'../')
 sys.path.insert(0, PATH)
 from bag_reader.bag_reader import BagReader
 from bag_parser.bag_parser import Parser
+from utils.image_data_handler import DepthHandler
+dh = DepthHandler()
 
 class Visualizer():
 
@@ -31,7 +33,8 @@ class Visualizer():
             img = cv2.imread(image_files[index])
         elif file_ext == '.npy':
             img = np.load(image_files[index])
-            img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+            #img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+            img = dh.get_depth_normalization(img)
             if img.ndim==2:
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -67,7 +70,7 @@ class Visualizer():
                     img = cv2.imread(image_files[index])
                 elif file_ext == '.npy':
                     img = np.load(image_files[index])
-                    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                    img = dh.get_depth_normalization(img)
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -110,7 +113,7 @@ class Visualizer():
 
                 # Load image
                 img = np.load(img_path)
-                img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                img = dh.get_depth_normalization(img)
                 if img.ndim==2:
                     img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -145,7 +148,6 @@ def main():
     Parser.add_bool_arg(parser, 'depth', default=False)
     Parser.add_arg(parser,arg='-f',name='images_folder', help='Enter folder name containing images of .jpg or .npy formats')
     args = Parser.get_args(parser)
-
     if args.single_bag is not None:
         visualizer.vis_bag(bag_file=args.single_bag,depth=args.depth, rgb=args.rgb)
     
