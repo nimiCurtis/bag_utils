@@ -59,7 +59,7 @@ class Visualizer():
                     img = cv2.imread(image_files[index])
                 elif file_ext == '.npy':
                     img = np.load(image_files[index])
-                    img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
+                    img = dh.get_depth_normalization(img)
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
