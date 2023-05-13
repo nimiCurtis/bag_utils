@@ -18,8 +18,13 @@ class Parser():
                             help="Use single bag file only")
         
         parser.add_argument('-a', dest="bag_batch_folder", type=is_bag_dir,
-                            help="Use all bag files in the 'bag' dir")
+                            help="Use all bag files in the 'bag_batch' dir")
+        
+        parser.add_argument('-l','--list', nargs='+',dest="bag_batch_list", help='list of bag_batch folders', required=True)
 
+        parser.add_argument('--all', dest="folder_of_batches", type=is_bag_dir,
+                            help="Use all batches folder in the 'bag' dir")
+        
         return parser.parse_args()
 
     @staticmethod

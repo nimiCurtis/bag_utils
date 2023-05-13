@@ -435,6 +435,19 @@ def export_bag(bag_obj:BagReader,with_imgs:bool)->None:
     else:
             print(f"[INFO]  Bag {bag_obj.bag} already exported. Not Exporting.")
 
+def export_batch(bag_obj:BagReader,batch_path:str,with_imgs:bool)->None:
+    print(f"[INFO]  Exporting batch - {batch_path}")
+    for filename in os.scandir(batch_path): 
+        if filename.is_file() and filename.path.split('.')[-1]=='bag':
+                    bag_file = filename.path
+                    bag_obj.bag = bag_file
+                    export_bag(bag_obj,with_imgs)
+
+def export_list(bag_obj:BagReader,list_batch_path:str,with_imgs:bool)->None:
+    print(f"[INFO]  Exporting list of batches")
+    for bag_batch in list_batch_path:
+        export_batch(bag_obj,bag_batch,with_imgs)
+
 def main():
     os.chdir(os.path.dirname(__file__))
 
@@ -447,11 +460,10 @@ def main():
     bag_file = PATH+'../bag/2023-03-07-19-16-37.bag' # default for example and debug
     
     if args.bag_batch_folder is not None:
-        for filename in os.scandir(args.bag_batch_folder): 
-            if filename.is_file() and filename.path.split('.')[-1]=='bag':
-                bag_file = filename.path
-                bag_obj.bag = bag_file
-                export_bag(bag_obj,args.with_imgs)
+        export_batch(bag_obj,args.bag_batch_folder,args.with_imgs)
+            
+    elif args.bag_batch_list is not None:
+        export_list(bag_obj,args.bag_batch_list,args.with_imgs)
 
     else:
         if args.single_bag is not None:
