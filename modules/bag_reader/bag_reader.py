@@ -7,6 +7,7 @@ import numpy as np
 import pandas as pd
 import json
 from functools import reduce
+from omegaconf import OmegaConf
 
 # extracting images dependendcies
 from typing import Union
@@ -77,6 +78,7 @@ class BagReader():
             with open(self.metadata_file,"r") as json_file:
                 self.MetaData = json.load(json_file)
         else:
+            self.MetaData["record_config"] = os.path.join(os.path.dirname(self._bag_file),"saved_configs/recorder_configs/.hydra/config.yaml")
             self.MetaData["exported"] = False
 
 
@@ -103,13 +105,13 @@ class BagReader():
 
 
         -TODO: 
-        - take topics from the record config file of the specific bag and check the metadata
+
         """
 
 
         print("[INFO]  Bag already exported, Reading data ...")
-        
-        names = ["imu","rgb","depth","confidence","disparity","pcl","tf","synced"] # change based on configuration
+        cfg = OmegaConf.load(self.MetaData["record_config"])
+        names = cfg.recording.topics_to_rec
         dfs = {}
         
         # iterating on topics names and read data
@@ -146,6 +148,11 @@ class BagReader():
                     dfs["imu"].to_csv(imu_file) # rewrite imu csv
                     self.MetaData["imu"] = imu_file # save the path to metadata
 
+            # export env_clf data
+            if (topic_row['Types']=='zion_msgs/EnvClfStamped') and  topic_row['Message Count']!=0:
+                env_clf_file = self.bag_read.message_by_topic(topic_row['Topics']) # create the csv file
+                self.MetaData["env_clf"] = env_clf_file
+                
             # export pcl data
             if ((topic_row['Types']=='sensor_msgs/PointCloud2') and topic_row['Message Count']!=0):
                 dfs["pcl"] = self.export_pcl(topic_row['Topics'])
@@ -259,7 +266,7 @@ class BagReader():
 
         topic_split = topic.split('/')
 
-        names = ["rgb","depth","confidence","disparity","pointclod"] # change based on configuration
+        names = ["rgb","depth","depth_synced","confidence","disparity","pointclod"] # change based on configuration
 
         # iterating on topics names and set df for every image topic
         for name in names:
@@ -343,7 +350,7 @@ class BagReader():
             if (img_type != "rgb"): # if not rgb type save the real values as .npy file, and update np list
                 values_array = np.array(cv_img, dtype=np.float32) # convert type to d_type --> extract depth values
 
-                if (img_type == "depth"):
+                if (img_type == "depth" or img_type == "depth_synced"):
                     cv_img = dp.get_depth_normalization(values_array) # get normalized image of depth values
 
                 if (img_type == "disparity"):
@@ -457,8 +464,7 @@ def main():
     Parser.add_bool_arg(parser,'with_imgs',default=False)
     args = Parser.get_args(parser)
 
-    bag_file = PATH+'../bag/2023-03-07-19-16-37.bag' # default for example and debug
-    
+    bag_file = PATH+'../bag/bag_batch_2023-06-11_16-07-58_None_None/2023-06-11-16-08-06.bag' # default for example and debug
     if args.bag_batch_folder is not None:
         export_batch(bag_obj,args.bag_batch_folder,args.with_imgs)
             
