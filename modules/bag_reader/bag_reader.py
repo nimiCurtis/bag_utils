@@ -166,7 +166,7 @@ class BagReader():
         if "imu" in self.MetaData:
             
             # wanted topics
-            wanted_topics = ['imu', 'rgb', 'depth'] # The keys you want
+            wanted_topics = ['imu', 'rgb', 'depth', 'pcl'] # The keys you want
             synced_topics = dict((k, dfs[k]) for k in wanted_topics if k in dfs)
             dfs["synced"] = self.sync_with_imu(synced_topics)
             synced_file = os.path.join(self.bag_read.datafolder,"synced.csv")
@@ -202,12 +202,15 @@ class BagReader():
         if not os.path.exists(dir):
             os.mkdir(dir)
 
-
+        stamp_dic = {"Time":[],"Time1":[],"header.stamp.secs":[],"header.stamp.nsecs":[]}
         #tmp_file = self.bag_read.message_by_topic(topic)
         bag = rosbag.Bag(self._bag_file, "r") # read the bag file using rosbag library
         for topic, msg, t in bag.read_messages(topics=topic):
 
-
+            stamp_dic["Time"].append(t.to_time())
+            stamp_dic["Time1"].append(msg.header.stamp.to_time())
+            stamp_dic["header.stamp.secs"].append(msg.header.stamp.secs)
+            stamp_dic["header.stamp.nsecs"].append(msg.header.stamp.nsecs)
             pc = pc2.read_points(msg, skip_nans=True)
 
             int_data = list(pc)
@@ -246,8 +249,11 @@ class BagReader():
             self._frame_count+=1
             
         bag.close
-        
-        df["pcl_path"] = path_buffer
+        df["Time"] = stamp_dic["Time"]
+        df["Time1"] = stamp_dic["Time1"]
+        df["header.stamp.secs"] = stamp_dic["header.stamp.secs"]
+        df["header.stamp.nsecs"] = stamp_dic["header.stamp.nsecs"]
+        df["frame_path"] = path_buffer
         df.to_csv(csv_file)
         self.MetaData["pcl"] = csv_file
         print("[INFO]  pcl folder saved")
@@ -266,7 +272,7 @@ class BagReader():
 
         topic_split = topic.split('/')
 
-        names = ["rgb","depth","depth_synced","confidence","disparity","pointclod"] # change based on configuration
+        names = ["rgb","depth","depth_synced","confidence","disparity","pcl"] # change based on configuration
 
         # iterating on topics names and set df for every image topic
         for name in names:
@@ -363,7 +369,7 @@ class BagReader():
 
             numpy_path_list.append(self.save_np_data(values_array,dir)) # save values
 
-            
+
             frame_path_list.append(frame_path) # update frame path list
             
             if self._with_imgs:
@@ -402,13 +408,14 @@ class BagReader():
         """
         df_sync = dfs["imu"]
         #dfs_to_sync = [v for k, v in dfs.items() ]
+
         cols = ['np_path', 'frame_path']
         keys = [k for k, v in dfs.items() if k!='imu']
         
         for key in keys:
             df = dfs[key]
             df = df.rename(columns={c: c+f'_{key}' for c in df.columns if c in cols})
-            df_sync = pd.merge(df_sync,df[["header.stamp.secs","header.stamp.nsecs",f"np_path_{key}",f"frame_path_{key}"]],on=["header.stamp.secs","header.stamp.nsecs"],how="right")    
+            df_sync = pd.merge(df_sync,df[["header.stamp.secs","header.stamp.nsecs",f"frame_path_{key}"]],on=["header.stamp.secs","header.stamp.nsecs"],how="right")    #f"np_path_{key}"
             
         return df_sync
 
@@ -464,7 +471,7 @@ def main():
     Parser.add_bool_arg(parser,'with_imgs',default=False)
     args = Parser.get_args(parser)
 
-    bag_file = PATH+'../bag/bag_batch_2023-06-11_16-07-58_None_None/2023-06-11-16-08-06.bag' # default for example and debug
+    bag_file = PATH+'../bag/2023-06-14-19-03-18.bag' # default for example and debug
     if args.bag_batch_folder is not None:
         export_batch(bag_obj,args.bag_batch_folder,args.with_imgs)
             
