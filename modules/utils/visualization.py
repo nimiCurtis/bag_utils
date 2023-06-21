@@ -17,10 +17,9 @@ class Visualizer():
     def __init__(self) -> None:
         pass
 
-    def vis_images(self,folder_path):
+    def vis_images(self,folder_path,depth,rgb,depth_synced):
         # Get list of all image files in folder
         image_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.endswith('.jpg') or f.endswith('.npy')]
-
         # Sort files alphabetically
         image_files.sort()
 
@@ -28,15 +27,19 @@ class Visualizer():
         index = 0
 
         # Display first image
+        
         file_ext = os.path.splitext(image_files[index])[1]
         if file_ext == '.jpg':
             img = cv2.imread(image_files[index])
         elif file_ext == '.npy':
             img = np.load(image_files[index])
-            #img = cv2.normalize(img, None, 0, 255, cv2.NORM_MINMAX, cv2.CV_8U)
-            img = dh.get_depth_normalization(img)
+            if rgb:
+                img = img.astype(np.uint8)
+            if depth or depth_synced:
+                img = dh.get_depth_normalization(img)
             if img.ndim==2:
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
+        
 
         cv2.imshow('Image Viewer', img)
 
@@ -59,7 +62,10 @@ class Visualizer():
                     img = cv2.imread(image_files[index])
                 elif file_ext == '.npy':
                     img = np.load(image_files[index])
-                    img = dh.get_depth_normalization(img)
+                    if rgb:
+                        img = img.astype(np.uint8)
+                    if depth or depth_synced:
+                        img = dh.get_depth_normalization(img)
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -70,39 +76,52 @@ class Visualizer():
                     img = cv2.imread(image_files[index])
                 elif file_ext == '.npy':
                     img = np.load(image_files[index])
-                    img = dh.get_depth_normalization(img)
+                    if rgb:
+                        img = img.astype(np.uint8)
+                    if depth or depth_synced:
+                        img = dh.get_depth_normalization(img)
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
         cv2.destroyAllWindows()
 
     
-    def vis_bag(self,bag_file:str,depth=False, rgb=False):
+    def vis_bag(self,bag_file:str,depth=False, rgb=False, depth_synced=False):
         bag_obj = BagReader()
         bag_obj.bag = bag_file
-        
-        df_rgb = pd.read_csv(bag_obj.MetaData["rgb"],index_col=0)
-        df_depth = pd.read_csv(bag_obj.MetaData["depth"],index_col=0)
-
-        display_both = False
         
         # Initialize index to 0
         index = 0
         idx_limit = 0
-        
+        display_both = False
         # Create a list of dataframes to iterate through
         dfs = []
-        if rgb:
-            dfs.append(df_rgb)
-            idx_limit = len(df_rgb)
-        elif depth:
-            dfs.append(df_depth)
-            idx_limit = len(df_depth)
+        
+        if "depth" in bag_obj.MetaData:
+                    df_depth = pd.read_csv(bag_obj.MetaData["depth"],index_col=0)
+        if "depth_synced" in bag_obj.MetaData:
+                    df_depth_synced = pd.read_csv(bag_obj.MetaData["depth_synced"],index_col=0)
+        if "rgb" in bag_obj.MetaData:
+                    df_rgb = pd.read_csv(bag_obj.MetaData["rgb"],index_col=0)
+
+
+        if depth_synced:
+                dfs.append(df_depth_synced)
+                idx_limit = len(df_depth_synced)
         else:
-            display_both = True
-            dfs.append(df_rgb)
-            dfs.append(df_depth)
-            idx_limit = min(len(df_depth),len(df_rgb))
+            if rgb and not(depth):
+                    dfs.append(df_rgb)
+                    idx_limit = len(df_rgb)
+            elif depth and not(rgb):
+                    dfs.append(df_depth)
+                    idx_limit = len(df_depth)
+            else:
+                display_both = True
+                dfs.append(df_rgb)
+                dfs.append(df_depth)
+                idx_limit = min(len(df_depth),len(df_rgb))
+
+
 
         # Loop until 'q' key is pressed
         while index<idx_limit:
@@ -113,7 +132,10 @@ class Visualizer():
 
                 # Load image
                 img = np.load(img_path)
-                img = dh.get_depth_normalization(img)
+                if rgb:
+                    img = img.astype(np.uint8)
+                if depth or depth_synced:
+                    img = dh.get_depth_normalization(img)
                 if img.ndim==2:
                     img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -146,13 +168,14 @@ def main():
     parser = Parser.get_parser()
     Parser.add_bool_arg(parser, 'rgb', default=False)
     Parser.add_bool_arg(parser, 'depth', default=False)
+    Parser.add_bool_arg(parser, 'depth_synced', default=False)
     Parser.add_arg(parser,arg='-f',name='images_folder', help='Enter folder name containing images of .jpg or .npy formats')
     args = Parser.get_args(parser)
     if args.single_bag is not None:
-        visualizer.vis_bag(bag_file=args.single_bag,depth=args.depth, rgb=args.rgb)
+        visualizer.vis_bag(bag_file=args.single_bag,depth=args.depth, rgb=args.rgb,depth_synced=args.depth_synced)
     
     elif args.images_folder is not None:
-        visualizer.vis_images(args.images_folder)
+        visualizer.vis_images(args.images_folder,depth=args.depth, rgb=args.rgb,depth_synced=args.depth_synced)
 
 if __name__=='__main__':
     main()

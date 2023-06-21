@@ -212,7 +212,7 @@ class BagReader():
             stamp_dic["header.stamp.secs"].append(msg.header.stamp.secs)
             stamp_dic["header.stamp.nsecs"].append(msg.header.stamp.nsecs)
             pc = pc2.read_points(msg, skip_nans=True)
-
+            
             int_data = list(pc)
             len_data = len(int_data)
             xyz = np.empty((len_data, 3))
