@@ -108,7 +108,6 @@ class BagReader():
 
         """
 
-
         print("[INFO]  Bag already exported, Reading data ...")
         cfg = OmegaConf.load(self.MetaData["record_config"])
         names = cfg.recording.topics_to_rec
@@ -152,19 +151,17 @@ class BagReader():
             if (topic_row['Types']=='zion_msgs/EnvClfStamped') and  topic_row['Message Count']!=0:
                 env_clf_file = self.bag_read.message_by_topic(topic_row['Topics']) # create the csv file
                 self.MetaData["env_clf"] = env_clf_file
-                
+
             # export pcl data
             if ((topic_row['Types']=='sensor_msgs/PointCloud2') and topic_row['Message Count']!=0):
                 dfs["pcl"] = self.export_pcl(topic_row['Topics'])
-            
+
             # export images data
-            if ((topic_row['Types']=='sensor_msgs/Image')or(topic_row['Types']=='stereo_msgs/DisparityImage')) and  topic_row['Message Count']!=0: # stop when topic is Image/Stereo kind and its not empty
+            if ((topic_row['Types']=='sensor_msgs/Image')or(topic_row['Types']=='stereo_msgs/DisparityImage')or(topic_row['Types']=='sensor_msgs/CompressedImage')) and  topic_row['Message Count']!=0: # stop when topic is Image/Stereo kind and its not empty
                 dfs = self.init_image_df(dfs,topic_row['Topics'])
-                
 
         # get df of topics synced with imu
         if "imu" in self.MetaData:
-            
             # wanted topics
             wanted_topics = ['imu', 'rgb', 'depth', 'pcl'] # The keys you want
             synced_topics = dict((k, dfs[k]) for k in wanted_topics if k in dfs)
@@ -449,6 +446,12 @@ def export_bag(bag_obj:BagReader,with_imgs:bool)->None:
     else:
             print(f"[INFO]  Bag {bag_obj.bag} already exported. Not Exporting.")
 
+def export_all(bag_obj:BagReader, bag_folder:str, with_imgs:bool)->None:
+    print(f"[INFO]  Exporting folder - {bag_folder}")
+    for filename in os.scandir(bag_folder): 
+        if filename.is_dir() and 'bag_batch' in filename.path:
+                    export_batch(bag_obj,filename.path, with_imgs=with_imgs)
+
 def export_batch(bag_obj:BagReader,batch_path:str,with_imgs:bool)->None:
     print(f"[INFO]  Exporting batch - {batch_path}")
     for filename in os.scandir(batch_path): 
@@ -471,13 +474,16 @@ def main():
     Parser.add_bool_arg(parser,'with_imgs',default=False)
     args = Parser.get_args(parser)
 
-    bag_file = PATH+'../bag/2023-06-14-19-03-18.bag' # default for example and debug
+    # bag_file = PATH+'../bag/2023-06-14-19-03-18.bag' # default for example and debug
+    bag_file = '/home/roblab20/catkin_ws/src/Exo_Intent/zion_zed_ros_interface/bag/bag_batch_2023-12-27_19-53-02_None_None/2023-12-27-19-58-31.bag' # default for example and debug
+
     if args.bag_batch_folder is not None:
         export_batch(bag_obj,args.bag_batch_folder,args.with_imgs)
             
     elif args.bag_batch_list is not None:
         export_list(bag_obj,args.bag_batch_list,args.with_imgs)
-
+    elif args.folder_of_batches is not None:
+        export_all(bag_obj, args.folder_of_batches, args.with_imgs)
     else:
         if args.single_bag is not None:
             bag_file = args.single_bag

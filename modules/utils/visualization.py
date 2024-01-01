@@ -12,6 +12,7 @@ from bag_parser.bag_parser import Parser
 from utils.image_data_handler import DepthHandler
 dh = DepthHandler()
 
+
 class Visualizer():
 
     def __init__(self) -> None:
@@ -37,6 +38,8 @@ class Visualizer():
                 img = img.astype(np.uint8)
             if depth or depth_synced:
                 img = dh.get_depth_normalization(img)
+                if depth_synced:
+                    img = img[109:529,59:359].copy()
             if img.ndim==2:
                 img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
         
@@ -66,6 +69,8 @@ class Visualizer():
                         img = img.astype(np.uint8)
                     if depth or depth_synced:
                         img = dh.get_depth_normalization(img)
+                        if depth_synced:
+                            img = img[109:529,59:359].copy()
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -80,6 +85,8 @@ class Visualizer():
                         img = img.astype(np.uint8)
                     if depth or depth_synced:
                         img = dh.get_depth_normalization(img)
+                        if depth_synced:
+                            img = img[109:529,59:359].copy()
                     if img.ndim==2:
                         img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
@@ -136,6 +143,8 @@ class Visualizer():
                     img = img.astype(np.uint8)
                 if depth or depth_synced:
                     img = dh.get_depth_normalization(img)
+                    if depth_synced:
+                        img = img[109:529,59:359].copy()
                 if img.ndim==2:
                     img = cv2.cvtColor(img,cv2.COLOR_GRAY2RGB)
 
